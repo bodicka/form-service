@@ -1,7 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import api from "./routes.js";
+import api from "./routes/index.js";
 import { initializeStore } from "./storage.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
