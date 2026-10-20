@@ -1,0 +1,223 @@
+.loading {
+  padding-block: 80px;
+  color: #888;
+  text-align: center;
+}
+.section-heading {
+  align-items: center;
+  margin-bottom: 26px;
+}
+.section-heading h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.heading-count {
+  display: inline-grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border-radius: 9px;
+  background: #eeecfc;
+  color: #6554cf;
+  font:
+    700 12px "Segoe UI",
+    sans-serif;
+  letter-spacing: 0;
+}
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.responses-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.responses-table th {
+  padding: 14px 15px;
+  border-bottom: 1px solid var(--line);
+  background: #fafaf8;
+  color: #888881;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.responses-table td {
+  max-width: 290px;
+  padding: 13px 15px;
+  border-bottom: 1px solid #f0f0ed;
+  color: #4d4d49;
+  overflow-wrap: anywhere;
+}
+.responses-table tr:last-child td {
+  border-bottom: 0;
+}
+.row-index {
+  color: #aaa !important;
+  font-size: 10px;
+}
+.date-cell {
+  color: #84847e !important;
+  white-space: nowrap;
+}
+.empty-value {
+  color: #c1c1bb;
+}
+.funnel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+.metric-card {
+  display: grid;
+  gap: 6px;
+  padding: 20px 21px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.metric-card > span {
+  color: #797972;
+  font-size: 11px;
+  font-weight: 600;
+}
+.metric-card > strong {
+  font:
+    800 34px "Segoe UI",
+    sans-serif;
+  letter-spacing: -0.06em;
+}
+.metric-card > small {
+  color: #969690;
+  font-size: 10px;
+}
+.metric-card > small b {
+  color: #6254ca;
+}
+.featured-metric {
+  border-color: #dbd5ff;
+  background: #f4f2ff;
+}
+.analytics-card {
+  margin-top: 18px;
+  padding: 23px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.analytics-heading {
+  align-items: flex-end;
+  margin-bottom: 25px;
+}
+.analytics-heading .eyebrow {
+  margin-bottom: 6px;
+}
+.analytics-heading h2 {
+  margin: 0;
+  font:
+    700 16px "Segoe UI",
+    sans-serif;
+  letter-spacing: -0.04em;
+}
+.dropoff-list {
+  display: grid;
+  gap: 17px;
+}
+.dropoff-row {
+  display: grid;
+  grid-template-columns: minmax(115px, 1fr) minmax(100px, 2fr) 35px;
+  align-items: center;
+  gap: 14px;
+}
+.dropoff-name {
+  overflow: hidden;
+  color: #5e5e58;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dropoff-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f1f0ed;
+}
+.dropoff-track span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #aea1ff, #6b57e8);
+  transition: width 0.3s ease;
+}
+.dropoff-row > b {
+  color: #777;
+  font-size: 11px;
+  text-align: right;
+}
+.analytics-note {
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #efefec;
+  color: #9b9b95;
+  font-size: 10px;
+}
+.inline-empty {
+  padding: 20px 0;
+  color: #92928c;
+  font-size: 11px;
+}
+.funnel-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 17px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.funnel-steps > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.funnel-node {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: #f0edff;
+  color: #6554cf;
+  font-size: 9px;
+  font-weight: 800;
+}
+.success-node {
+  background: #e7f6ef;
+  color: #27866b;
+}
+.funnel-steps b,
+.funnel-steps small {
+  display: block;
+}
+.funnel-steps b {
+  font-size: 11px;
+}
+.funnel-steps small {
+  margin-top: 3px;
+  color: #999;
+  font-size: 9px;
+}
+.funnel-line {
+  width: min(12vw, 75px);
+  height: 1px;
+  background: #e4e3e0;
+}
+

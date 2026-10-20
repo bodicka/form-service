@@ -1,164 +1,42 @@
-import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowRight, Check, LoaderCircle } from "lucide-react";
-import { api, ApiError, type Form, type FormField } from "../../shared/api";
-import { useFillStore } from "./fillStore";
-
-function sessionId() {
-  const key = "form-service-session";
-  let value = localStorage.getItem(key);
-  if (!value) {
-    value = crypto.randomUUID();
-    localStorage.setItem(key, value);
-  }
-  return value;
-}
-
-function nonempty(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value.length > 0 : Boolean(value?.trim());
-}
-
-function validate(field: FormField, value: string | string[]) {
-  if (!nonempty(value)) return field.required ? "Это обязательное поле" : "";
-  if (typeof value !== "string") return "";
-  if (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-    return "Проверьте формат email";
-  if (field.type === "phone" && !/^\+?[\d\s().-]{7,20}$/.test(value))
-    return "Проверьте формат номера телефона";
-  if (field.type === "url") {
-    try {
-      const url = new URL(value);
-      if (!["http:", "https:"].includes(url.protocol))
-        return "Введите ссылку, начинающуюся с http:// или https://";
-    } catch {
-      return "Введите корректную ссылку";
-    }
-  }
-  if (field.type === "number" && !Number.isFinite(Number(value)))
-    return "Введите число";
-  if (field.type === "date") {
-    const date = new Date(`${value}T00:00:00Z`);
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-      Number.isNaN(date.getTime()) ||
-      date.toISOString().slice(0, 10) !== value
-    )
-      return "Введите корректную дату";
-  }
-  return "";
-}
+import { ArrowRight, Check } from "lucide-react";
+import type { FormField } from "../../shared/api";
+import { ErrorBox } from "../../shared/components/ErrorBox";
+import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
+import { useFormFill } from "./hooks/useFormFill";
 
 export default function FillPage() {
   const { slug = "" } = useParams();
-  const [form, setForm] = useState<Form | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [restored, setRestored] = useState(false);
-  const started = useRef(false);
-  const drafts = useFillStore((state) => state.drafts);
-  const setAnswer = useFillStore((state) => state.setAnswer);
-  const clearDraft = useFillStore((state) => state.clearDraft);
-  const answers = drafts[slug] || {};
-  const requiredFields = form?.fields.filter((field) => field.required) || [];
-  const completed = requiredFields.filter((field) =>
-    nonempty(answers[field.id]),
-  ).length;
-  const progress = requiredFields.length
-    ? Math.round((completed / requiredFields.length) * 100)
-    : 100;
-  useEffect(() => {
-    let active = true;
-    started.current = false;
-    setRestored(
-      Object.keys(useFillStore.getState().drafts[slug] || {}).length > 0,
-    );
-    setLoading(true);
-    setError("");
-    setForm(null);
-    setSubmitted(false);
-    setServerErrors({});
-    setTouched({});
-    api<Form>(`/api/public/forms/${encodeURIComponent(slug)}`)
-      .then((data) => {
-        if (!active) return;
-        setForm(data);
-        void track("view");
-      })
-      .catch((caught: unknown) => {
-        if (!active) return;
-        if (caught instanceof ApiError && caught.code === "FORM_CLOSED")
-          setError("Эта форма больше не принимает ответы.");
-        else if (caught instanceof ApiError && caught.code === "FORM_NOT_FOUND")
-          setError("Похоже, такой формы не существует.");
-        else
-          setError(
-            caught instanceof Error
-              ? caught.message
-              : "Не удалось загрузить форму",
-          );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [slug]);
+  const {
+    form,
+    loading,
+    error,
+    submitted,
+    busy,
+    answers,
+    restored,
+    completed,
+    requiredFields,
+    progress,
+    setValue,
+    focusField,
+    blurField,
+    fieldError,
+    submit,
+  } = useFormFill(slug);
 
-  function track(
-    type: "view" | "start" | "field_focus" | "field_complete" | "submit",
-    fieldId?: string,
-  ) {
-    return api(`/api/public/forms/${encodeURIComponent(slug)}/events`, {
-      method: "POST",
-      body: JSON.stringify({
-        type,
-        sessionId: sessionId(),
-        ...(fieldId ? { fieldId } : {}),
-      }),
-    }).catch((caught: unknown) => {
-      console.warn("Analytics event was not recorded", caught);
-    });
-  }
-  function interact() {
-    if (!started.current) {
-      started.current = true;
-      void track("start");
-    }
-  }
-  function setValue(field: FormField, value: string | string[]) {
-    interact();
-    setAnswer(slug, field.id, value);
-    setServerErrors((current) => ({ ...current, [field.id]: "" }));
-  }
   function control(field: FormField) {
     const value = answers[field.id];
     const textValue = typeof value === "string" ? value : "";
-    const errorMessage =
-      serverErrors[field.id] ||
-      (touched[field.id] ? validate(field, value || "") : "");
+    const errorMessage = fieldError(field);
     const common = {
       id: field.id,
       name: field.id,
       placeholder: field.placeholder,
       "aria-invalid": Boolean(errorMessage),
       "aria-describedby": `${field.id}-help${errorMessage ? ` ${field.id}-error` : ""}`,
-      onFocus: () => {
-        interact();
-        void track("field_focus", field.id);
-      },
-      onBlur: () => {
-        setTouched((current) => ({ ...current, [field.id]: true }));
-        if (
-          nonempty(answers[field.id]) &&
-          !validate(field, answers[field.id] || "")
-        )
-          void track("field_complete", field.id);
-      },
+      onFocus: () => focusField(field),
+      onBlur: () => blurField(field),
     } as const;
     let input;
     if (field.type === "textarea") {
@@ -301,52 +179,11 @@ export default function FillPage() {
       </div>
     );
   }
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!form) return;
-    const nextErrors: Record<string, string> = {};
-    setTouched(
-      Object.fromEntries(form.fields.map((field) => [field.id, true])),
-    );
-    for (const field of form.fields) {
-      const message = validate(field, answers[field.id] || "");
-      if (message) nextErrors[field.id] = message;
-    }
-    setServerErrors(nextErrors);
-    if (Object.keys(nextErrors).length) {
-      document.getElementById(Object.keys(nextErrors)[0])?.focus();
-      return;
-    }
-    setBusy(true);
-    try {
-      await api(`/api/public/forms/${encodeURIComponent(slug)}/responses`, {
-        method: "POST",
-        body: JSON.stringify({ answers, sessionId: sessionId() }),
-      });
-      void track("submit");
-      clearDraft(slug);
-      setSubmitted(true);
-    } catch (caught) {
-      if (caught instanceof ApiError && caught.fields)
-        setServerErrors(caught.fields);
-      else
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "Не удалось отправить форму",
-        );
-    } finally {
-      setBusy(false);
-    }
-  }
 
   if (loading)
     return (
       <main className="student-page">
-        <div className="student-loading">
-          <LoaderCircle className="spin" size={24} />
-          Загружаем форму…
-        </div>
+        <LoadingSpinner label="Загружаем форму…" />
       </main>
     );
   if (error)
@@ -417,7 +254,7 @@ export default function FillPage() {
             noValidate
           >
             <div className="fields-stack">{form.fields.map(control)}</div>
-            {error && <div className="error-box">{error}</div>}
+            {error && <ErrorBox>{error}</ErrorBox>}
             <div className="submit-area">
               <button className="button primary submit-button" disabled={busy}>
                 {busy ? "Отправляем…" : "Отправить отклик"}

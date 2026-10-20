@@ -9,6 +9,7 @@ type BuilderState = {
   setTitle: (title: string) => void
   setDescription: (description: string) => void
   setFields: (fields: FormField[]) => void
+  reset: () => void
 }
 
 export const useBuilderStore = create<BuilderState>((set) => ({
@@ -19,4 +20,5 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   setTitle: (title) => set({ title }),
   setDescription: (description) => set({ description }),
   setFields: (fields) => set({ fields }),
+  reset: () => set({ title: 'Новая форма', description: '', fields: [] }),
 }))

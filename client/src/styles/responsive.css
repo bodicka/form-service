@@ -1,0 +1,174 @@
+@media (max-width: 860px) {
+  .editor-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 0.72fr);
+    gap: 18px;
+  }
+  .form-actions {
+    gap: 3px;
+  }
+  .form-actions .button {
+    padding-inline: 8px;
+  }
+  .required-note {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .page-wrap {
+    width: min(100% - 32px, 560px);
+    margin-top: 31px;
+  }
+  .topbar {
+    height: 59px;
+    padding-inline: 17px;
+  }
+  .page-heading,
+  .section-heading,
+  .editor-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .page-heading .button,
+  .section-heading > .button {
+    align-self: stretch;
+  }
+  .forms-toolbar {
+    margin-top: 29px;
+  }
+  .form-row {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px;
+  }
+  .form-icon {
+    width: 39px;
+    height: 39px;
+  }
+  .form-main {
+    flex-basis: calc(100% - 58px);
+  }
+  .form-actions {
+    width: 100%;
+    padding-left: 50px;
+  }
+  .form-actions .button:last-child {
+    margin-left: auto;
+  }
+  .editor-heading {
+    gap: 12px;
+  }
+  .editor-actions {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .editor-actions .button {
+    flex: 1;
+  }
+  .editor-actions .button:first-child {
+    flex: 0 0 auto;
+  }
+  .subnav {
+    gap: 16px;
+  }
+  .subnav .status-pill {
+    display: none;
+  }
+  .editor-layout {
+    display: flex;
+    flex-direction: column;
+  }
+  .builder-column,
+  .preview-column {
+    width: 100%;
+  }
+  .preview-column {
+    position: static;
+  }
+  .field-form-grid {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+  .secondary-grid {
+    margin-top: 11px;
+  }
+  .builder-card {
+    padding: 18px;
+  }
+  .field-card {
+    padding: 15px 14px;
+  }
+  .funnel-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .metric-card {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 14px 17px;
+  }
+  .metric-card > strong {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .metric-card > small {
+    grid-column: 1;
+  }
+  .analytics-card {
+    padding: 17px;
+  }
+  .analytics-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .funnel-steps {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 13px;
+  }
+  .funnel-steps > div {
+    gap: 10px;
+  }
+  .funnel-line {
+    width: 1px;
+    height: 15px;
+    margin-left: 15px;
+  }
+  .student-page {
+    padding: 16px 12px 22px;
+  }
+  .student-brand {
+    margin: 3px 5px 15px;
+  }
+  .form-cover {
+    padding: 24px 21px 19px;
+  }
+  .student-form {
+    padding: 5px 21px 23px;
+  }
+  .restored-note {
+    margin-inline: 21px;
+  }
+  .student-footer {
+    flex-wrap: wrap;
+    line-height: 1.6;
+  }
+}
+@media (max-width: 420px) {
+  .login-card {
+    padding: 28px 23px;
+  }
+  .section-heading h1 {
+    font-size: 30px;
+  }
+  .dropoff-row {
+    grid-template-columns: minmax(95px, 1fr) minmax(70px, 1.5fr) 25px;
+    gap: 8px;
+  }
+  .builder-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .builder-section-head .muted {
+    padding-left: 36px;
+  }
+}
