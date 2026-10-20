@@ -6,9 +6,8 @@ import {
   FormsList,
 } from "./features/form-builder/AdminPage";
 import FillPage from "./features/form-fill/FillPage";
-import ResponsesPage, {
-  AnalyticsPage,
-} from "./features/responses/ResponsesPage";
+import ResponsesPage from "./features/responses/ResponsesPage";
+import { AnalyticsPage } from "./features/responses/AnalyticsPage";
 import styles from "./App.module.css";
 
 export default function App() {

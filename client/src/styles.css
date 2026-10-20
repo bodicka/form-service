@@ -697,6 +697,7 @@ a {
 }
 .checkbox {
   display: grid;
+  justify-content: center;
   width: 17px;
   height: 17px;
   place-items: center;
