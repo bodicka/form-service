@@ -36,6 +36,26 @@ export type Analytics = {
 }
 
 const TOKEN_KEY = 'form-service-auth'
+
+function readToken(): string | null {
+  try {
+    const authState = localStorage.getItem(TOKEN_KEY)
+    if (!authState) return null
+    const parsed = JSON.parse(authState) as { state?: { token?: unknown } }
+    return typeof parsed.state?.token === 'string' ? parsed.state.token : null
+  } catch {
+    return null
+  }
+}
+
+function clearToken() {
+  try {
+    localStorage.removeItem(TOKEN_KEY)
+  } catch {
+    return
+  }
+}
+
 export class ApiError extends Error {
   code: string
   fields?: Record<string, string>
@@ -47,9 +67,7 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const authState = localStorage.getItem(TOKEN_KEY)
-
-  const token = authState ? (JSON.parse(authState) as { state?: { token?: string } }).state?.token : null
+  const token = readToken()
 
   const headers = new Headers(options.headers)
 
@@ -60,7 +78,7 @@ export async function api<T>(url: string, options: RequestInit = {}): Promise<T>
 
   if (!response.ok) {
     if (response.status === 401 && token) {
-      localStorage.removeItem(TOKEN_KEY)
+      clearToken()
       window.dispatchEvent(new Event('form-service-auth-expired'))
     }
 
@@ -73,8 +91,7 @@ export async function api<T>(url: string, options: RequestInit = {}): Promise<T>
 }
 
 export async function download(url: string, filename: string) {
-  const authState = localStorage.getItem(TOKEN_KEY)
-  const token = authState ? (JSON.parse(authState) as { state?: { token?: string } }).state?.token : null
+  const token = readToken()
 
   const response = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
 

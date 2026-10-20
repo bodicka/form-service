@@ -1,33 +1,59 @@
 import { z } from 'zod'
 
+const OPTION_TYPES = new Set(['radio', 'select', 'checkbox'])
+
 const FieldSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().trim().min(1, 'Укажите ID поля').max(100, 'Слишком длинный ID поля').regex(/^[A-Za-z0-9_-]+$/, 'Некорректный ID поля'),
   type: z.enum(['text', 'textarea', 'email', 'phone', 'number', 'radio', 'select', 'checkbox', 'date', 'url']),
-  label: z.string().trim().min(1),
-  description: z.string(),
-  placeholder: z.string(),
+  label: z.string().trim().min(1, 'Укажите название вопроса').max(300, 'Название вопроса слишком длинное'),
+  description: z.string().max(2000, 'Подсказка к вопросу слишком длинная'),
+  placeholder: z.string().max(300, 'Текст в поле слишком длинный'),
   required: z.boolean(),
-  options: z.array(z.string()),
+  options: z.array(z.string().max(300, 'Вариант ответа слишком длинный')).max(50, 'Слишком много вариантов ответа'),
 })
 
 const FormSchema = z.object({
   title: z.string().trim().min(1, 'Укажите название формы').max(160, 'Название формы слишком длинное'),
-  description: z.string(),
-  fields: z.array(FieldSchema).max(50, 'В форме может быть не более 50 полей'),
+  description: z.string().max(5000, 'Описание формы слишком длинное'),
+  fields: z.array(FieldSchema).min(1, 'Добавьте хотя бы один вопрос').max(50, 'В форме может быть не более 50 полей'),
 })
 
 const AnswersSchema = z.record(z.string(), z.union([z.string(), z.array(z.string())]))
+const SessionIdSchema = z.string().trim().min(1, 'Некорректная сессия').max(100, 'Некорректная сессия')
+
+function normalizeOptions(options) {
+  return [...new Set(options.map((option) => option.trim()).filter(Boolean))]
+}
+
+function normalizeForm(input) {
+  return {
+    title: input.title.trim(),
+    description: input.description,
+    fields: input.fields.map((field) => ({
+      ...field,
+      id: field.id.trim(),
+      label: field.label.trim(),
+      options: normalizeOptions(field.options),
+    })),
+  }
+}
 
 export function validateFormInput(input) {
   const parsed = FormSchema.safeParse(input)
-  if (!parsed.success) return parsed.error.issues[0]?.message || 'Проверьте данные формы'
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message || 'Проверьте данные формы' }
+  const data = normalizeForm(parsed.data)
   const ids = new Set()
-  for (const field of parsed.data.fields) {
-    if (ids.has(field.id)) return 'У каждого поля должен быть уникальный ID'
+  for (const field of data.fields) {
+    if (ids.has(field.id)) return { error: 'У каждого поля должен быть уникальный ID' }
     ids.add(field.id)
-    if (['radio', 'select', 'checkbox'].includes(field.type) && (!field.options.length || field.options.some((option) => !option.trim()))) return `Добавьте варианты для поля «${field.label}»`
+    if (OPTION_TYPES.has(field.type) && !field.options.length) return { error: `Добавьте варианты для поля «${field.label}»` }
   }
-  return null
+  return { data }
+}
+
+export function normalizeSessionId(value) {
+  const parsed = SessionIdSchema.safeParse(value)
+  return parsed.success ? parsed.data : null
 }
 
 export function validateAnswers(form, answers) {

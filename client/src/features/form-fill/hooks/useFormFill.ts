@@ -29,6 +29,7 @@ export function useFormFill(slug: string) {
   const started = useRef(false);
   const drafts = useFillStore((state) => state.drafts);
   const setAnswer = useFillStore((state) => state.setAnswer);
+  const replaceDraft = useFillStore((state) => state.replaceDraft);
   const clearDraft = useFillStore((state) => state.clearDraft);
   const answers = drafts[slug] || {};
   const requiredFields = form?.fields.filter((field) => field.required) || [];
@@ -65,9 +66,7 @@ export function useFormFill(slug: string) {
   useEffect(() => {
     let active = true;
     started.current = false;
-    setRestored(
-      Object.keys(useFillStore.getState().drafts[slug] || {}).length > 0,
-    );
+    setRestored(false);
     setLoading(true);
     setError("");
     setForm(null);
@@ -77,6 +76,18 @@ export function useFormFill(slug: string) {
     api<Form>(`/api/public/forms/${encodeURIComponent(slug)}`)
       .then((data) => {
         if (!active) return;
+        const currentDraft = useFillStore.getState().drafts[slug] || {};
+        const fieldIds = new Set(data.fields.map((field) => field.id));
+        const validAnswers = Object.fromEntries(
+          Object.entries(currentDraft).filter(([fieldId]) =>
+            fieldIds.has(fieldId),
+          ),
+        );
+        if (
+          Object.keys(validAnswers).length !== Object.keys(currentDraft).length
+        )
+          replaceDraft(slug, validAnswers);
+        setRestored(Object.keys(validAnswers).length > 0);
         setForm(data);
         void track("view");
       })
@@ -99,7 +110,7 @@ export function useFormFill(slug: string) {
     return () => {
       active = false;
     };
-  }, [slug, track]);
+  }, [slug, track, replaceDraft]);
 
   const setValue = useCallback(
     (field: FormField, value: string | string[]) => {
@@ -141,36 +152,63 @@ export function useFormFill(slug: string) {
     [answers, serverErrors, touched],
   );
 
+  const focusFirstError = useCallback(
+    (errors: Record<string, string>) => {
+      const fieldId = Object.keys(errors).find(
+        (key) =>
+          key !== "_form" && form?.fields.some((field) => field.id === key),
+      );
+      if (!fieldId) return;
+      const element =
+        document.getElementById(fieldId) ??
+        document.getElementsByName(fieldId)[0];
+      element?.focus();
+    },
+    [form],
+  );
+
   const submit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!form) return;
+      const fieldIds = new Set(form.fields.map((field) => field.id));
+      const cleanAnswers = Object.fromEntries(
+        Object.entries(answers).filter(([fieldId]) => fieldIds.has(fieldId)),
+      );
+      if (
+        Object.keys(cleanAnswers).length !== Object.keys(answers).length
+      )
+        replaceDraft(slug, cleanAnswers);
       const nextErrors: Record<string, string> = {};
       setTouched(
         Object.fromEntries(form.fields.map((field) => [field.id, true])),
       );
       for (const field of form.fields) {
-        const message = validateField(field, answers[field.id] || "");
+        const message = validateField(field, cleanAnswers[field.id] || "");
         if (message) nextErrors[field.id] = message;
       }
       setServerErrors(nextErrors);
       if (Object.keys(nextErrors).length) {
-        document.getElementById(Object.keys(nextErrors)[0])?.focus();
+        focusFirstError(nextErrors);
         return;
       }
       setBusy(true);
       try {
         await api(`/api/public/forms/${encodeURIComponent(slug)}/responses`, {
           method: "POST",
-          body: JSON.stringify({ answers, sessionId: getSessionId() }),
+          body: JSON.stringify({
+            answers: cleanAnswers,
+            sessionId: getSessionId(),
+          }),
         });
         void track("submit");
         clearDraft(slug);
         setSubmitted(true);
       } catch (caught) {
-        if (caught instanceof ApiError && caught.fields)
+        if (caught instanceof ApiError && caught.fields) {
           setServerErrors(caught.fields);
-        else
+          focusFirstError(caught.fields);
+        } else
           setError(
             caught instanceof Error
               ? caught.message
@@ -180,7 +218,7 @@ export function useFormFill(slug: string) {
         setBusy(false);
       }
     },
-    [answers, clearDraft, form, slug, track],
+    [answers, clearDraft, focusFirstError, form, replaceDraft, slug, track],
   );
 
   return {

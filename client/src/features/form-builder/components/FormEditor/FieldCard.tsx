@@ -14,6 +14,17 @@ import {
 import type { FormField, FieldType } from "../../../../shared/api";
 import { FIELD_TYPES } from "../../constants/fieldTypes";
 
+function normalizeOptions(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split("\n")
+        .map((option) => option.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 interface FieldCardProps {
   field: FormField;
   index: number;
@@ -170,6 +181,9 @@ export function FieldCard({
             value={field.options.join("\n")}
             onChange={(event) =>
               onChange({ ...field, options: event.target.value.split("\n") })
+            }
+            onBlur={(event) =>
+              onChange({ ...field, options: normalizeOptions(event.target.value) })
             }
             placeholder="Каждый вариант — с новой строки"
           />

@@ -33,6 +33,7 @@ export function useFormEditor(id: string): UseFormEditorResult {
   const setDescription = useBuilderStore((state) => state.setDescription)
   const fields = useBuilderStore((state) => state.fields)
   const setFields = useBuilderStore((state) => state.setFields)
+  const reset = useBuilderStore((state) => state.reset)
 
   const [form, setForm] = useState<Form | null>(null)
   const [busy, setBusy] = useState(false)
@@ -40,8 +41,29 @@ export function useFormEditor(id: string): UseFormEditorResult {
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  const dirty = Boolean(
+    form &&
+      (title !== form.title ||
+        description !== form.description ||
+        JSON.stringify(fields) !== JSON.stringify(form.fields)),
+  )
+
+  useEffect(() => {
+    if (!dirty) return
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [dirty])
+
   useEffect(() => {
     let active = true
+    reset()
+    setForm(null)
+    setError('')
+    setNotice('')
     api<Form>(`/api/admin/forms/${id}`)
       .then((loaded) => {
         if (!active) return
@@ -58,8 +80,9 @@ export function useFormEditor(id: string): UseFormEditorResult {
       })
     return () => {
       active = false
+      reset()
     }
-  }, [id, setDescription, setFields, setTitle])
+  }, [id, reset, setDescription, setFields, setTitle])
 
   const move = useCallback((index: number, direction: number) => {
     const next = [...fields]
@@ -71,6 +94,11 @@ export function useFormEditor(id: string): UseFormEditorResult {
   }, [fields, setFields])
 
   const persist = useCallback(async (publish = false) => {
+    if (!fields.length) {
+      setError('Добавьте хотя бы один вопрос')
+      setNotice('')
+      return
+    }
     setBusy(true)
     setError('')
     setNotice('')

@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowUpRight, Check, Copy, Plus } from 'lucide-react'
 import { api, save, type Form } from '../../../shared/api'
+import { LoadingSpinner } from '../../../shared/components/LoadingSpinner'
+import { createField } from '../constants/fieldTypes'
 
 export function FormsList() {
   const [forms, setForms] = useState<Form[]>([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState('')
   const navigate = useNavigate()
 
   async function load() {
+    setLoading(true)
     try {
       setForms(await api<Form[]>('/api/admin/forms'))
       setError('')
@@ -17,6 +21,8 @@ export function FormsList() {
       setError(
         caught instanceof Error ? caught.message : 'Не удалось загрузить формы',
       )
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -29,7 +35,7 @@ export function FormsList() {
       const form = await save({
         title: 'Новая форма',
         description: '',
-        fields: [],
+        fields: [createField()],
       })
       navigate(`/admin/forms/${form.id}`)
     } catch (caught) {
@@ -65,9 +71,13 @@ export function FormsList() {
         <span className="section-label">
           ВСЕ ФОРМЫ <b>{forms.length}</b>
         </span>
-        <span className="muted small-text">Обновлено только что</span>
+        <span className="muted small-text">
+          Опубликовано: {forms.filter((form) => form.status === 'published').length}
+        </span>
       </div>
-      {forms.length ? (
+      {loading ? (
+        <LoadingSpinner label="Загружаем формы…" />
+      ) : forms.length ? (
         <div className="form-list">
           {forms.map((form) => (
             <article className="form-row" key={form.id}>
